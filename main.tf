@@ -43,6 +43,62 @@ resource "aws_sagemaker_domain" "this" {
     }
   }
 
+  default_space_settings {
+    execution_role  = var.default_space_settings.execution_role
+    security_groups = var.default_space_settings.security_groups
+
+    dynamic "jupyter_server_app_settings" {
+      for_each = var.default_space_settings.jupyter_server_app_settings != null ? [1] : []
+      content {
+        lifecycle_config_arns = var.default_space_settings.jupyter_server_app_settings.lifecycle_config_arns
+
+        dynamic "code_repository" {
+          for_each = var.default_space_settings.jupyter_server_app_settings.code_repositories_urls
+          content {
+            repository_url = code_repository.value
+          }
+        }
+
+        dynamic "default_resource_spec" {
+          for_each = var.default_space_settings.jupyter_server_app_settings.default_resource_spec != null ? [1] : []
+          content {
+            instance_type               = var.default_space_settings.jupyter_server_app_settings.default_resource_spec.instance_type
+            lifecycle_config_arn        = var.default_space_settings.jupyter_server_app_settings.default_resource_spec.lifecycle_config_arn
+            sagemaker_image_arn         = var.default_space_settings.jupyter_server_app_settings.default_resource_spec.sagemaker_image_arn
+            sagemaker_image_version_arn = var.default_space_settings.jupyter_server_app_settings.default_resource_spec.sagemaker_image_version_arn
+          }
+        }
+      }
+    }
+
+    dynamic "kernel_gateway_app_settings" {
+      for_each = var.default_space_settings.kernel_gateway_app_settings != null ? [1] : []
+      content {
+        lifecycle_config_arns = var.default_space_settings.kernel_gateway_app_settings.lifecycle_config_arns
+
+        dynamic "custom_image" {
+          for_each = var.default_space_settings.kernel_gateway_app_settings.custom_images
+          content {
+            app_image_config_name = custom_image.value.app_image_config_name
+            image_name            = custom_image.value.image_name
+            image_version_number  = custom_image.value.image_version_number
+          }
+        }
+
+        dynamic "default_resource_spec" {
+          for_each = var.default_space_settings.kernel_gateway_app_settings.default_resource_spec != null ? [1] : []
+          content {
+            instance_type                 = var.default_space_settings.kernel_gateway_app_settings.default_resource_spec.instance_type
+            lifecycle_config_arn          = var.default_space_settings.kernel_gateway_app_settings.default_resource_spec.lifecycle_config_arn
+            sagemaker_image_arn           = var.default_space_settings.kernel_gateway_app_settings.default_resource_spec.sagemaker_image_arn
+            sagemaker_image_version_alias = var.default_space_settings.kernel_gateway_app_settings.default_resource_spec.sagemaker_image_version_alias
+            sagemaker_image_version_arn   = var.default_space_settings.kernel_gateway_app_settings.default_resource_spec.sagemaker_image_version_arn
+          }
+        }
+      }
+    }
+  }
+
   default_user_settings {
     execution_role  = var.default_user_settings.execution_role
     security_groups = var.default_user_settings.security_groups
@@ -50,6 +106,20 @@ resource "aws_sagemaker_domain" "this" {
     dynamic "canvas_app_settings" {
       for_each = var.default_user_settings.canvas_app_settings != null ? [1] : []
       content {
+        dynamic "direct_deploy_settings" {
+          for_each = var.default_user_settings.canvas_app_settings.direct_deploy_settings != null ? [1] : []
+          content {
+            status = var.default_user_settings.canvas_app_settings.direct_deploy_settings.enabled ? "ENABLED" : "DISABLED"
+          }
+        }
+
+        dynamic "generative_ai_settings" {
+          for_each = var.default_user_settings.canvas_app_settings.generative_ai_settings != null ? [1] : []
+          content {
+            amazon_bedrock_role_arn = var.default_user_settings.canvas_app_settings.generative_ai_settings.amazon_bedrock_role_arn
+          }
+        }
+
         dynamic "model_register_settings" {
           for_each = var.default_user_settings.canvas_app_settings.model_register_settings != null ? [1] : []
           content {
@@ -63,6 +133,14 @@ resource "aws_sagemaker_domain" "this" {
           content {
             status                   = var.default_user_settings.canvas_app_settings.time_series_forecasting_settings.enabled ? "ENABLED" : "DISABLED"
             amazon_forecast_role_arn = var.default_user_settings.canvas_app_settings.time_series_forecasting_settings.amazon_forecast_role_arn
+          }
+        }
+
+        dynamic "workspace_settings" {
+          for_each = var.default_user_settings.canvas_app_settings.workspace_settings != null ? [1] : []
+          content {
+            s3_artifact_path = var.default_user_settings.canvas_app_settings.workspace_settings.s3_artifact_path
+            s3_kms_key_id    = var.default_user_settings.canvas_app_settings.workspace_settings.s3_kms_key_id
           }
         }
       }
